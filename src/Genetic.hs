@@ -50,7 +50,7 @@ listEvolver (row, i, j) individual
 
 nextGeneration :: RandomGen g => (Individual, g) -> (Population, g)
 nextGeneration (individual, generator) =
-  (map ($ individual) evolvers, snd $ next generator)
+  (map ($ individual) evolvers, snd $ split generator)
   where
     aggro     = 200
     size      = length individual
