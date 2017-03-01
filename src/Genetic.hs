@@ -1,14 +1,45 @@
+{-# LANGUAGE TypeSynonymInstances #-} 
+{-# LANGUAGE FlexibleInstances #-}
+
 module Genetic where
 
-import System.Random
 import GHC.Exts
+import Control.Monad.Random
+
+class Genome a where
+  fitness :: a -> Float
+  breed :: (MonadRandom m) => a -> a -> m a
+  mutate :: (MonadRandom m) => a -> m a
+  nextGeneration :: (MonadRandom m) => Int -> a -> m [a]
+  nextGeneration amount parent = replicateM amount (mutate parent)
+  selectParents :: (MonadRandom m) => [a] -> m [a]
+  runTournament :: (MonadRandom m) => Int -> m [a] -> m [a]
+  runTournament amount population = do
+    x:y:xs <- population
+    parent <- breed x y
+    children <- nextGeneration amount parent
+    selectParents children
 
 type Duration = Int -- Minutes
-type Position = Int
 type Individual = [ReviewSchedule]
-type Population = [Individual]
 
 newtype ReviewSchedule = ReviewSchedule [Duration] deriving Show
+
+instance Genome Individual where
+  fitness xs = sum $ map (\x -> (fromIntegral x - avg)^2) values
+    where 
+     ReviewSchedule values = mconcat xs
+     avg = fromIntegral(sum values) / 12.0
+
+  mutate individual = do
+    row <- getRandomR (0,(length individual)-1)
+    col1 <- getRandomR (0,11)
+    col2 <- getRandomR (0,11)
+    return $ listEvolver (row, col1, col2) individual
+
+  breed ind1 ind2 = mutate ind1
+
+  selectParents xs = return $ take 2 (sortWith fitness xs)
 
 
 (|>) f x = x f
@@ -26,13 +57,6 @@ instance Monoid ReviewSchedule where
   mappend (ReviewSchedule a) (ReviewSchedule b) = ReviewSchedule $ zipWith (+) a b
 
 
-fitness :: Individual -> Float
-fitness xs = sum $ map (\x -> (fromIntegral x - avg)^2) values
-  where 
-   ReviewSchedule values = mconcat xs
-   avg = fromIntegral(sum values) / 12.0
-
-
 rowEvolver :: (Int, Int) -> ReviewSchedule -> ReviewSchedule
 rowEvolver (i, j) (ReviewSchedule values) = ReviewSchedule $ swapTwo i j values
 
@@ -46,45 +70,3 @@ listEvolver (row, i, j) individual
     size = length individual
     range = [0..size-1]
     (x:xs) = individual
-
-
-nextGeneration :: RandomGen g => (Individual, g) -> (Population, g)
-nextGeneration (individual, generator) =
-  (map ($ individual) evolvers, snd $ split generator)
-  where
-    aggro     = 200
-    size      = length individual
-    positions = cycle [0..size-1]
-    (<$>)     = map
-    (<*>)     = zipWith ($)
-    list      = randomRs (0 :: Int,11) generator
-    xs = take (aggro*size) list
-    ys = drop (aggro*size) list |> take (aggro*size)
-    -- zipWith (,,) 3 lists
-    tuples = (,,) <$> positions <*> xs <*> ys
-    evolvers = map listEvolver tuples
-
-    
-selectFittest :: Population -> Individual
-selectFittest population =
-  sortWith fitness population |> head
-
-
-evolve :: RandomGen g => (Individual, g) -> (Individual, g)
-evolve (individual, generator) =
-  (selectFittest population, gg)
-  where
-    (population, gg) = nextGeneration(individual, generator)
-
-
-run :: RandomGen g => Int -> (Individual, g) -> (Individual, g)
-run 0                   (individual, generator) = (individual, generator)
-run numberOfGenerations (individual, generator) =
-  if new_fitness < old_fitness then
-    run (numberOfGenerations-1) $ (evolved, gg)
-  else
-    (individual, generator)
-  where
-     old_fitness   = fitness individual
-     (evolved, gg) = evolve (individual, generator)
-     new_fitness   = fitness evolved
