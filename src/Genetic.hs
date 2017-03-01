@@ -50,7 +50,7 @@ listEvolver (row, i, j) individual
 
 nextGeneration :: RandomGen g => (Individual, g) -> (Population, g)
 nextGeneration (individual, generator) =
-  (map ($ individual) evolvers, generator)
+  (map ($ individual) evolvers, snd $ next generator)
   where
     aggro     = 200
     size      = length individual
@@ -78,7 +78,7 @@ evolve (individual, generator) =
 
 
 run :: RandomGen g => Int -> (Individual, g) -> (Individual, g)
-run 0 (individual, generator) = (individual, generator)
+run 0                   (individual, generator) = (individual, generator)
 run numberOfGenerations (individual, generator) =
   if new_fitness < old_fitness then
     run (numberOfGenerations-1) $ (evolved, gg)
