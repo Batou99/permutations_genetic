@@ -4,6 +4,8 @@
 module Genetic where
 
 import GHC.Exts
+import Data.Monoid
+import Control.Monad
 import Control.Monad.Random
 
 class Genome a where
@@ -32,7 +34,7 @@ instance Genome Individual where
      avg = fromIntegral(sum values) / 12.0
 
   mutate individual = do
-    row <- getRandomR (0,(length individual)-1)
+    row  <- getRandomR (0,(length individual)-1)
     col1 <- getRandomR (0,11)
     col2 <- getRandomR (0,11)
     return $ listEvolver (row, col1, col2) individual

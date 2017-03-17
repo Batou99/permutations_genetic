@@ -20,3 +20,4 @@ executable pg
   build-depends:       base >= 4.7 && < 5
                      , MonadRandom
                      , mtl
+                     , moo

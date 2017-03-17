@@ -2,12 +2,11 @@ flags: {}
 extra-package-dbs: []
 packages:
 - '.'
+- location:
+    git: https://github.com/astanin/moo.git
+    commit: ce77e5ac1a1e370746a60ee21f67f50cc5b85b98
 extra-deps:
-- MonadRandom-0.5.1
-- fail-4.9.0.0
-- mtl-2.2.1
-- primitive-0.6.2.0
-- random-1.1
-- random-shuffle-0.0.4
-- transformers-compat-0.5.1.4
-resolver: ghc-8.0.1
+- moo-1.1
+- gray-code-0.3.1
+- monad-mersenne-random-0.1
+resolver: lts-1.15

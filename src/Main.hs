@@ -1,6 +1,7 @@
 module Main where
 
 import Control.Monad.Random
+import Data.Monoid
 import Genetic
 
 type Revisions = [Int]
